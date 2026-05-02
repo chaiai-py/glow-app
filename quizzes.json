@@ -1,0 +1,11 @@
+[
+  {
+    "id": "q1",
+    "category": "logic",
+    "title": "Simple Math",
+    "content": "What is 2+2?",
+    "choices": ["3", "4", "5"],
+    "answer": "4",
+    "explanation": "Basic arithmetic"
+  }
+]
