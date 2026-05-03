@@ -16,6 +16,16 @@ type ChatSession = {
 const CHAT_HISTORY_KEY = "glowChatHistory";
 const USER_NAME_KEY = "glowUserName";
 const CURRENT_CHAT_ID_KEY = "glowCurrentChatId";
+const USER_LEVEL_KEY = "glowUserLevel";
+const USER_XP_KEY = "glowUserXp";
+
+const LEVEL_TRIVIA = [
+  "Trivia: Your brain produces enough electricity to power a small light bulb while you're awake.",
+  "Secret: Studies show talking through goals can increase your chances of success by over 40%.",
+  "Fun fact: People who write down their ideas are more likely to remember and act on them.",
+  "Hidden gem: A short walk after learning helps move information from short-term memory into long-term memory.",
+  "Little known: Most creative breakthroughs happen when people switch tasks instead of pushing harder on the same problem.",
+];
 
 type Topic = "learning" | "career" | "finance" | "wellness" | "general";
 
@@ -156,8 +166,8 @@ const renderInlineText = (text: string) =>
 function formatText(text: string) {
   // Split by numbered lists and paragraphs
   const lines = text.split("\n");
-  const elements = [];
-  let currentParagraph = [];
+  const elements = [] as React.ReactNode[];
+  let currentParagraph: string[] = [];
 
   const flushParagraph = (key: string) => {
     if (currentParagraph.length > 0) {
@@ -229,6 +239,9 @@ function App() {
   const [currentChatId, setCurrentChatId] = useState<string>("");
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("");
+  const [level, setLevel] = useState<number>(1);
+  const [xp, setXp] = useState<number>(0);
+  const [levelUpBanner, setLevelUpBanner] = useState<string>("");
   const [isListening, setIsListening] = useState<boolean>(false);
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [hoveredChatId, setHoveredChatId] = useState<string>("");
@@ -257,20 +270,87 @@ function App() {
     localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
   };
 
+  const saveLevelState = (nextLevel: number, nextXp: number) => {
+    setLevel(nextLevel);
+    setXp(nextXp);
+    localStorage.setItem(USER_LEVEL_KEY, String(nextLevel));
+    localStorage.setItem(USER_XP_KEY, String(nextXp));
+  };
+
+  const awardXp = (points: number) => {
+    let nextXp = xp + points;
+    let nextLevel = level;
+    const banners: string[] = [];
+
+    while (nextXp >= 100) {
+      nextXp -= 100;
+      nextLevel += 1;
+      const trivia = LEVEL_TRIVIA[(nextLevel - 2) % LEVEL_TRIVIA.length];
+      banners.push(`🎉 Congratulations! You reached Level ${nextLevel}! ${trivia}`);
+    }
+
+    saveLevelState(nextLevel, nextXp);
+    return banners.join("\n\n");
+  };
+
   const loadChatSession = (chat: ChatSession) => {
     setCurrentChatId(chat.id);
     setMessages(chat.messages);
     setIntent(chat.intent);
   };
 
-  // 💾 Reset to initial state on load/refresh
-  useEffect(() => {
-    // Clear persisted data to ensure a fresh start on every refresh
+  const clearPersistedState = () => {
     localStorage.removeItem(CHAT_HISTORY_KEY);
     localStorage.removeItem(USER_NAME_KEY);
     localStorage.removeItem(CURRENT_CHAT_ID_KEY);
-    
-    createNewChat();
+    localStorage.removeItem(USER_LEVEL_KEY);
+    localStorage.removeItem(USER_XP_KEY);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      clearPersistedState();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // 💾 Reset to initial state on load/refresh
+  useEffect(() => {
+    const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+    const savedName = localStorage.getItem(USER_NAME_KEY);
+    const savedChatId = localStorage.getItem(CURRENT_CHAT_ID_KEY);
+    const savedLevel = localStorage.getItem(USER_LEVEL_KEY);
+    const savedXp = localStorage.getItem(USER_XP_KEY);
+
+    if (savedName) {
+      setUserName(savedName);
+    }
+
+    if (savedLevel && !Number.isNaN(Number(savedLevel))) {
+      setLevel(Math.max(1, Number(savedLevel)));
+    }
+
+    if (savedXp && !Number.isNaN(Number(savedXp))) {
+      setXp(Math.max(0, Number(savedXp)));
+    }
+
+    if (savedHistory) {
+      try {
+        const history = JSON.parse(savedHistory) as ChatSession[];
+        setChatHistory(history);
+
+        const activeChat = savedChatId ? history.find((chat) => chat.id === savedChatId) : history[0];
+        if (activeChat) {
+          setCurrentChatId(activeChat.id);
+          setMessages(activeChat.messages);
+          setIntent(activeChat.intent);
+        }
+      } catch (err) {
+        console.warn("Failed to load saved chat history", err);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -297,6 +377,14 @@ function App() {
 
   // 📋 Create new chat
   const createNewChat = () => {
+    if (!messages.length && !currentChatId && !chatHistory.length) {
+      return;
+    }
+
+    if (!messages.length && currentChatId) {
+      return;
+    }
+
     const newChatId = Date.now().toString();
     const newChat: ChatSession = {
       id: newChatId,
@@ -345,7 +433,11 @@ function App() {
       if (updated.length > 0) {
         loadChatSession(updated[0]);
       } else {
-        createNewChat();
+        setShowHistory(false);
+        setCurrentChatId("");
+        setMessages([]);
+        setIntent("");
+        localStorage.removeItem(CURRENT_CHAT_ID_KEY);
       }
     }
   };
@@ -414,8 +506,29 @@ function App() {
     const messageText = promptOverride || input;
     if (!messageText.trim()) return;
 
+    if (!currentChatId) {
+      const newChatId = Date.now().toString();
+      setCurrentChatId(newChatId);
+      localStorage.setItem(CURRENT_CHAT_ID_KEY, newChatId);
+      setChatHistory((prev) => [
+        {
+          id: newChatId,
+          title: "New Chat",
+          messages: [],
+          intent: "",
+          timestamp: Date.now(),
+        },
+        ...prev,
+      ]);
+    }
+
     const userMessage: Message = { role: "user", text: messageText };
     const currentInput = messageText;
+    const levelUpText = awardXp(10);
+
+    if (levelUpText) {
+      setLevelUpBanner(levelUpText);
+    }
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
@@ -447,6 +560,11 @@ function App() {
 
       setMessages((prev) => [...prev, aiMessage]);
       setIntent(data.intent || "unknown");
+
+      // level notification is shown separately in the banner
+      if (levelUpText) {
+        setLevelUpBanner(levelUpText);
+      }
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -481,6 +599,12 @@ function App() {
     }
   }, [messages, intent, currentChatId]);
 
+  useEffect(() => {
+    if (!levelUpBanner) return;
+    const timeout = window.setTimeout(() => setLevelUpBanner(""), 9000);
+    return () => window.clearTimeout(timeout);
+  }, [levelUpBanner]);
+
   return (
     <div
       style={{
@@ -489,7 +613,7 @@ function App() {
       }}
     >
       {/* 📂 SIDEBAR - CHAT HISTORY */}
-      {showHistory && !isCompact && (
+      {showHistory && !isCompact && chatHistory.length > 0 && (
         <div style={styles.sidebar}>
           <div style={styles.sidebarHeader}>
             <h3 style={styles.sidebarTitle}>Chat History</h3>
@@ -629,7 +753,7 @@ function App() {
             <h1 style={styles.title}>Glow</h1>
             {userName && (
               <div style={styles.xpBadge}>
-                LVL 5 • 1,240 XP
+                LVL {level} • {xp} XP
               </div>
             )}
           </div>
@@ -641,6 +765,12 @@ function App() {
             +
           </button>
         </div>
+
+        {levelUpBanner && (
+          <div style={styles.levelBanner}>
+            {levelUpBanner}
+          </div>
+        )}
 
         {/* CHAT AREA */}
         <div
@@ -1162,6 +1292,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     letterSpacing: "0.05em",
     textTransform: "uppercase",
     animation: "pulse 2s infinite",
+  },
+
+  levelBanner: {
+    margin: "0 20px 12px",
+    padding: "14px 18px",
+    borderRadius: "18px",
+    border: "1px solid rgba(56,189,248,0.28)",
+    background: "linear-gradient(135deg, rgba(56,189,248,0.18), rgba(59,130,246,0.12))",
+    color: "#eff6ff",
+    fontSize: "14px",
+    fontWeight: 600,
+    lineHeight: "1.5",
+    boxShadow: "0 20px 50px rgba(59,130,246,0.12)",
   },
 
   menuButton: {
