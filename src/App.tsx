@@ -69,7 +69,7 @@ const GAMIFIED_FEATURES = [
   },
   {
     title: "Skill Quiz",
-    prompt: "I want to test my knowledge. Please start a quiz on a random topic. Ask me only one question at a time and wait for my answer. Present multiple-choice options clearly using letters (A, B, C, D) on separate lines. When I answer, tell me if I am right or wrong, provide a brief explanation or trivia about the answer, and then present the next question.",
+    prompt: "I want to test my knowledge. Please start a quiz. First, ask me how many questions I want (maximum 20). Then randomly select quiz modes (multiple choice, true/false, identification, enumeration) based on the topic. Ask only one question at a time and wait for my answer. For multiple choice, present options clearly using letters (A, B, C, D) on separate lines. For true/false, present True/False options. For identification, ask for a direct answer. For enumeration, ask to list items. When I answer, tell me if I am right or wrong, provide a brief explanation or trivia, award points (10 for correct, 0 for wrong), show current score, and then present the next question. Remember my previous answers in the conversation context.",
     icon: "🧠",
     color: "#fbbf24"
   },
@@ -242,12 +242,11 @@ function App() {
   const [level, setLevel] = useState<number>(1);
   const [xp, setXp] = useState<number>(0);
   const [levelUpBanner, setLevelUpBanner] = useState<string>("");
-  const [isListening, setIsListening] = useState<boolean>(false);
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [hoveredChatId, setHoveredChatId] = useState<string>("");
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const recognitionRef = useRef<any>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
   const isCompact = viewportWidth < 900;
   const isPhone = viewportWidth < 560;
 
@@ -450,56 +449,6 @@ function App() {
   const saveName = (name: string) => {
     setUserName(name);
     localStorage.setItem(USER_NAME_KEY, name);
-  };
-
-  const toggleVoiceInput = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setInput((prev) =>
-        prev
-          ? `${prev}\nVoice input is not supported in this browser.`
-          : "Voice input is not supported in this browser."
-      );
-      return;
-    }
-
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.continuous = false;
-
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
-        .map((result: any) => result[0]?.transcript || "")
-        .join(" ")
-        .trim();
-
-      if (transcript) {
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-      }
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      recognitionRef.current = null;
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-      recognitionRef.current = null;
-    };
-
-    recognitionRef.current = recognition;
-    setIsListening(true);
-    recognition.start();
   };
 
   const handleSend = async (promptOverride?: string) => {
@@ -785,8 +734,9 @@ function App() {
               <div style={{ fontSize: "52px", marginBottom: "10px" }}>✨</div>
               <h2 style={styles.greetingTitle}>Welcome to Glow</h2>
               <p style={styles.greetingCopy}>To get started, what should I call you?</p>
-              <div style={{ marginTop: "20px", display: "flex", gap: "10px", width: "100%", maxWidth: "300px" }}>
+              <div style={{ marginTop: "20px", display: "flex", flexDirection: "row", gap: "10px", width: "100%", maxWidth: "300px", alignItems: "center" }}>
                 <input 
+                  ref={nameInputRef}
                   type="text" 
                   placeholder="Your name" 
                   onKeyDown={(e) => {
@@ -795,13 +745,18 @@ function App() {
                   style={{...styles.input, height: "40px"}} 
                 />
                 <button 
-                  onClick={(e) => {
-                    const input = (e.currentTarget.previousSibling as HTMLInputElement).value;
-                    if(input) saveName(input);
+                  onClick={() => {
+                    const input = nameInputRef.current?.value?.trim();
+                    if (input) saveName(input);
                   }}
-                  style={styles.button}
+                  style={{...styles.button, height: "50px"}}
                 >Go</button>
+               
+                
               </div>
+               <p style={{ fontSize: "9px", color: "#94a3b8", textAlign: "center", margin: "5px 0" }}>
+                  💡 Unlocking next level will give you a juicy trivia!
+                </p>
             </div>
           )}
 
@@ -950,42 +905,34 @@ function App() {
             ...(isCompact ? styles.inputRowCompact : {}),
           }}
         >
-          <textarea
-            value={input}
-            placeholder="Ask anything..."
-            onChange={(e) => setInput(e.target.value)}
-            style={styles.input}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-          />
-
-          <button
-            style={{
-              ...styles.voiceButton,
-              ...(isListening ? styles.voiceButtonActive : {}),
-            }}
-            onClick={toggleVoiceInput}
-            title={isListening ? "Stop voice input" : "Start voice input"}
-          >
-            {isListening ? (
-              <span style={{ color: "#fda4af", animation: "pulse 1.5s infinite" }}>●</span>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            )}
-          </button>
-
-          <button style={styles.button} onClick={() => handleSend()}>
-            🚀
-          </button>
+          {userName ? (
+            <>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Type your message here..."
+                style={styles.input}
+                autoFocus
+              />
+              <button
+                onClick={() => handleSend()}
+                style={styles.button}
+                disabled={loading || !input.trim()}
+              >
+                Send
+              </button>
+            </>
+          ) : (
+            <div style={{ color: "#94a3b8", fontSize: "14px", flex: 1 }}>
+              💡 This is AI-generated guidance. Use your judgment and consult professionals for important decisions.
+            </div>
+          )}
         </div>
 
         {/* META */}

@@ -1,0 +1,42 @@
+{
+  "indexingPolicy": {
+    "indexingMode": "consistent",
+    "automatic": true,
+    "includedPaths": [
+      {
+        "path": "/history/message/?",
+        "indexes": [
+          {
+            "kind": "Range",
+            "dataType": "String",
+            "precision": -1
+          }
+        ]
+      },
+      {
+        "path": "/history/intent/?",
+        "indexes": [
+          {
+            "kind": "Hash",
+            "dataType": "String",
+            "precision": -1
+          }
+        ]
+      },
+      {
+        "path": "/quiz_state/?",
+        "indexes": [
+          {
+            "kind": "Range",
+            "dataType": "Number",
+            "precision": -1
+          }
+        ]
+      }
+    ]
+  },
+  "partitionKey": {
+    "paths": ["/user_id"],
+    "kind": "Hash"
+  }
+}

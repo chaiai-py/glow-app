@@ -4,8 +4,199 @@
     "category": "logic",
     "title": "Simple Math",
     "content": "What is 2+2?",
+    "mode": "multiple_choice",
     "choices": ["3", "4", "5"],
     "answer": "4",
     "explanation": "Basic arithmetic"
+  },
+  {
+    "id": "q2",
+    "category": "logic",
+    "title": "True or False",
+    "content": "The Earth is flat.",
+    "mode": "true_false",
+    "choices": ["True", "False"],
+    "answer": "False",
+    "explanation": "The Earth is an oblate spheroid"
+  },
+  {
+    "id": "q3",
+    "category": "science",
+    "title": "Basic Science",
+    "content": "What is the chemical symbol for water?",
+    "mode": "identification",
+    "choices": [],
+    "answer": "H2O",
+    "explanation": "Water consists of two hydrogen atoms and one oxygen atom"
+  },
+  {
+    "id": "q4",
+    "category": "science",
+    "title": "Planets",
+    "content": "Name the planets in our solar system.",
+    "mode": "enumeration",
+    "choices": [],
+    "answer": "Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune",
+    "explanation": "There are 8 planets in our solar system"
+  },
+  {
+    "id": "q5",
+    "category": "history",
+    "title": "World War II",
+    "content": "In which year did World War II end?",
+    "mode": "multiple_choice",
+    "choices": ["1944", "1945", "1946", "1947"],
+    "answer": "1945",
+    "explanation": "World War II ended in 1945 with the surrender of Japan"
+  },
+  {
+    "id": "q6",
+    "category": "history",
+    "title": "Ancient Civilizations",
+    "content": "The Roman Empire fell in 476 AD.",
+    "mode": "true_false",
+    "choices": ["True", "False"],
+    "answer": "True",
+    "explanation": "The Western Roman Empire fell in 476 AD"
+  },
+  {
+    "id": "q7",
+    "category": "literature",
+    "title": "Shakespeare",
+    "content": "Who wrote Romeo and Juliet?",
+    "mode": "identification",
+    "choices": [],
+    "answer": "William Shakespeare",
+    "explanation": "Romeo and Juliet is one of Shakespeare's most famous tragedies"
+  },
+  {
+    "id": "q8",
+    "category": "literature",
+    "title": "Literary Terms",
+    "content": "Name three types of literary devices.",
+    "mode": "enumeration",
+    "choices": [],
+    "answer": "Metaphor, Simile, Personification",
+    "explanation": "These are common figures of speech used in literature"
+  },
+  {
+    "id": "q9",
+    "category": "math",
+    "title": "Algebra",
+    "content": "Solve for x: 2x + 3 = 7",
+    "mode": "identification",
+    "choices": [],
+    "answer": "2",
+    "explanation": "Subtract 3 from both sides: 2x = 4, then divide by 2: x = 2"
+  },
+  {
+    "id": "q10",
+    "category": "math",
+    "title": "Geometry",
+    "content": "What is the sum of angles in a triangle?",
+    "mode": "multiple_choice",
+    "choices": ["180 degrees", "360 degrees", "90 degrees", "270 degrees"],
+    "answer": "180 degrees",
+    "explanation": "The sum of interior angles in any triangle is 180 degrees"
+  },
+  {
+    "id": "q11",
+    "category": "geography",
+    "title": "Capitals",
+    "content": "What is the capital of France?",
+    "mode": "identification",
+    "choices": [],
+    "answer": "Paris",
+    "explanation": "Paris is the capital and most populous city of France"
+  },
+  {
+    "id": "q12",
+    "category": "geography",
+    "title": "Continents",
+    "content": "Name the seven continents.",
+    "mode": "enumeration",
+    "choices": [],
+    "answer": "Africa, Antarctica, Asia, Europe, North America, South America, Oceania",
+    "explanation": "There are seven continents on Earth"
+  },
+  {
+    "id": "q13",
+    "category": "biology",
+    "title": "Human Body",
+    "content": "How many chambers does the human heart have?",
+    "mode": "multiple_choice",
+    "choices": ["2", "3", "4", "5"],
+    "answer": "4",
+    "explanation": "The human heart has four chambers: two atria and two ventricles"
+  },
+  {
+    "id": "q14",
+    "category": "biology",
+    "title": "Photosynthesis",
+    "content": "Plants use sunlight to make food through photosynthesis.",
+    "mode": "true_false",
+    "choices": ["True", "False"],
+    "answer": "True",
+    "explanation": "Photosynthesis is the process by which plants convert light energy into chemical energy"
+  },
+  {
+    "id": "q15",
+    "category": "physics",
+    "title": "Newton's Laws",
+    "content": "What is Newton's First Law of Motion?",
+    "mode": "identification",
+    "choices": [],
+    "answer": "An object at rest stays at rest, and an object in motion stays in motion with the same speed and in the same direction unless acted upon by an unbalanced force",
+    "explanation": "This is also known as the Law of Inertia"
+  },
+  {
+    "id": "q16",
+    "category": "physics",
+    "title": "Energy",
+    "content": "Energy can be created or destroyed.",
+    "mode": "true_false",
+    "choices": ["True", "False"],
+    "answer": "False",
+    "explanation": "According to the Law of Conservation of Energy, energy cannot be created or destroyed, only transformed"
+  },
+  {
+    "id": "q17",
+    "category": "chemistry",
+    "title": "Elements",
+    "content": "What element has the atomic number 1?",
+    "mode": "identification",
+    "choices": [],
+    "answer": "Hydrogen",
+    "explanation": "Hydrogen is the lightest and most abundant element in the universe"
+  },
+  {
+    "id": "q18",
+    "category": "chemistry",
+    "title": "Periodic Table",
+    "content": "Name the three states of matter.",
+    "mode": "enumeration",
+    "choices": [],
+    "answer": "Solid, Liquid, Gas",
+    "explanation": "These are the three fundamental states of matter"
+  },
+  {
+    "id": "q19",
+    "category": "computer_science",
+    "title": "Programming",
+    "content": "What does HTML stand for?",
+    "mode": "multiple_choice",
+    "choices": ["HyperText Markup Language", "High Tech Modern Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"],
+    "answer": "HyperText Markup Language",
+    "explanation": "HTML is the standard markup language for creating web pages"
+  },
+  {
+    "id": "q20",
+    "category": "computer_science",
+    "title": "Algorithms",
+    "content": "What is the time complexity of binary search?",
+    "mode": "identification",
+    "choices": [],
+    "answer": "O(log n)",
+    "explanation": "Binary search divides the search space in half with each comparison"
   }
 ]

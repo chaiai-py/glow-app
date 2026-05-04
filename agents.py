@@ -20,19 +20,69 @@ def search_knowledge(query):
     }
 
     body = {
-        "search": query,
-        "top": 3
+        "search": query or "*",
+        "top": 5,
+        "queryType": "full",
+        "searchFields": "content,title,category,keywords",
+        "select": "content,title,category,source",
+        "orderby": "@search.score desc"
     }
 
     try:
         res = requests.post(url, headers=headers, json=body)
         data = res.json()
 
-        return [doc.get("content", "") for doc in data.get("value", [])]
+        if "value" not in data:
+            print("SEARCH ERROR: unexpected response", data)
+            return []
+
+        results = []
+        for doc in data.get("value", []):
+            text = doc.get("content", "")
+            title = doc.get("title", "")
+            category = doc.get("category", "")
+            source = doc.get("source", "")
+            if title:
+                results.append(f"{title}: {text}")
+            else:
+                results.append(text)
+
+        return results
 
     except Exception as e:
         print("SEARCH ERROR:", e)
         return []
+
+
+def search_quiz_document(query):
+    url = f"{AZURE_SEARCH_ENDPOINT}/indexes/{AZURE_SEARCH_INDEX}/docs/search?api-version=2023-11-01"
+
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": AZURE_SEARCH_KEY
+    }
+
+    body = {
+        "search": query or "*",
+        "top": 1,
+        "queryType": "full",
+        "searchFields": "content,title,category,keywords",
+        "select": "title,content,choices,answer,category",
+        "orderby": "@search.score desc"
+    }
+
+    try:
+        res = requests.post(url, headers=headers, json=body)
+        data = res.json()
+
+        if "value" not in data or len(data["value"]) == 0:
+            return None
+
+        return data["value"][0]
+
+    except Exception as e:
+        print("QUIZ SEARCH ERROR:", e)
+        return None
 
 
 # -----------------------------
@@ -50,10 +100,20 @@ def call_llm(prompt):
         "messages": [
             {"role": "system", "content": """You are an intelligent AI life coach. 
              When conducting a quiz:
-             1. If the user provides an answer, evaluate it immediately (Correct/Incorrect).
-             2. Provide a brief explanation and a piece of trivia.
-             3. Ask a NEW and DIFFERENT question to continue the quiz. 
-             Never repeat the same question twice. Ask only ONE question at a time."""},
+             1. First, ask how many questions the user wants (maximum 20).
+             2. Randomly select quiz modes: multiple_choice, true_false, identification, enumeration based on topic.
+             3. Ask only ONE question at a time and wait for the user's answer.
+             4. For multiple_choice: Present options as A, B, C, D on separate lines.
+             5. For true_false: Present True/False options.
+             6. For identification: Ask for direct answer.
+             7. For enumeration: Ask user to list items.
+             8. When user answers, evaluate immediately (Correct/Incorrect).
+             9. Provide brief explanation and trivia.
+             10. Award points: 10 for correct, 0 for wrong.
+             11. Show current score and progress.
+             12. Ask a NEW and DIFFERENT question to continue.
+             13. Remember previous answers and context in the conversation.
+             Never repeat the same question twice. Always progress through the quiz."""},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7
@@ -66,7 +126,7 @@ def call_llm(prompt):
         # 🔥 Debug if needed
         if "choices" not in data:
             print("LLM ERROR RESPONSE:", data)
-            return "Error: Unable to generate response."
+            return {"text": "Error: Unable to generate response."}
 
         return data["choices"][0]["message"]["content"]
 
@@ -85,7 +145,7 @@ You are a {role}.
 User message:
 {message}
 
-User history:
+User history (includes previous quiz answers and context):
 {memory}
 
 Relevant knowledge:
@@ -98,11 +158,16 @@ IMPORTANT: Format your response with:
 - Use bold text with **text** for important terms
 - Keep sentences clear and actionable
 
+QUIZ HANDLING:
 If the user is participating in a quiz:
-1. Check if the 'User message' is an answer to the last question in 'User history'.
-2. If it is an answer, provide feedback (correct/incorrect) and trivia, then ask a NEW question.
-3. If the user is just starting, ask the first question.
-4. Ensure you always progress to a different question and never loop.
+1. Check the 'User history' for previous quiz context, answers, and current score.
+2. If this is the first message about a quiz, ask how many questions they want (max 20).
+3. Randomly select appropriate quiz modes based on topic: multiple_choice, true_false, identification, enumeration.
+4. Ask only ONE question at a time.
+5. When evaluating answers, reference previous context to maintain conversation flow.
+6. Award points and track score throughout the quiz.
+7. Ensure questions are different and progress logically.
+8. Remember all previous answers and maintain conversation context.
 
 Give clear, actionable, and helpful advice.
 """
